@@ -1,5 +1,7 @@
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import vacuumcleaner.base.*;
 
 /**
@@ -51,6 +53,21 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
 
         //6. Umgebung in einen Graphen umwandeln (4 Zustände / Blickrichtungen) pro Raum
+        List<Node> list = new LinkedList<Node>();
+
+        for(int x=0; x<environment.getWidth(); x++){
+            for(int y=0; y<environment.getHeight(); y++){
+                if(environment.containsDirt(x, y) || (environment.getAgentHome().equals(new Point(x, y)))
+                        || (environment.getAgentLocation().equals(new Point(x, y)))){
+                    for(Direction direction : Direction.values()){
+                        list.add(new Node(new Point(x, y), direction));
+                    }
+                }
+            }
+        }
+
+        System.out.println(list);
+
         //7. Entfernungen in Aktionen bestimmen:
         //   a) von der AgentenPosition/Start-Blickrichtung
         //      ->(i) zu allen Dreckpositionen (ausser denen unter (5.) genannten) mit allen dabei möglichen Blickrichtungen
@@ -89,6 +106,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
      * Bestimmt nach einer Performancebestimmung die dabei besuchten Dreckfelder
      * @return Liste der besuchten Dreckfelder (und anderer "interessanter" Punkte)
      */
+    @Override
     public ArrayList<Point> getVisitedPoints() 
     {
         return visitedDirtPoints;
