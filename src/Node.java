@@ -15,13 +15,13 @@ import vacuumcleaner.base.EnvironmentBase;
  *
  * @author s5677658
  */
-class Node{
-    private final Point point;
-    private final Direction direction;
+public class Node{
+    private Point point;
+    private Direction direction;
 	private HashMap<Node, Integer> distance = new HashMap<Node, Integer>();
 	private EnvironmentBase environment;
 
-	Node(Point point, Direction direction, EnvironmentBase environment) {
+	public Node(Point point, Direction direction, EnvironmentBase environment) {
         this.point = point;
         this.direction = direction;
 		this.environment = environment;
@@ -32,23 +32,61 @@ class Node{
         return "Node "+point.getX()+" "+point.getY()+" looking "+direction+"\n";
     }
 
-	void setList(List<Node> list) {
+	public void setList(List<Node> list) {
 		for(Node node : list){
-			search(node);
+			Integer dist = search(node);
+			System.out.println("Distance from "+this.toString()+" to "+node+" is "+dist);
+			distance.put(node, dist);
 		}
 	}
 
-	private void search(Node node) {
+	Direction getDirection(){
+		return direction;
+	}
+
+
+	private int search(Node goal) {
+		Integer value = 99999;
 		PriorityQueue<SearchNode> queue = new PriorityQueue<SearchNode>();
-		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, node);
+		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal);
+		queue.add(root);
+
+		HashMap<SearchNode, Integer> visitedNodes = new HashMap<SearchNode, Integer>();
+		visitedNodes.put(root, 0);
+
+		while(!queue.isEmpty()){
+			SearchNode node = queue.poll();
+
+			if(node.equals(goal)){
+				return node.getDepth();
+			}
+
+			/**** expand ****/
+			// turn left
+			SearchNode child = new SearchNode(node.getPoint(), turnLeft(node.getDirection()), this.environment,
+					node.getDepth() + 1, goal);
+			if(!visitedNodes.containsKey(child)){
+				queue.add(child);
+			}
+			// turn right
+			child = new SearchNode(node.getPoint(), turnRight(node.getDirection()), this.environment,
+					node.getDepth() + 1, goal);
+			if(!visitedNodes.containsKey(child)){
+				queue.add(child);
+			}
+			// move
+			child = new SearchNode(move(node.getPoint(), node.getDirection()), node.getDirection(), this.environment,
+					node.getDepth() + 1, goal);
+			if(environment.isRoom(child.getPoint().x, child.getPoint().y)
+					&& !visitedNodes.containsKey(child)){
+				queue.add(child);
+			}
+		}
+		return value;
 	}
 
 	public Point getPoint(){
 		return point;
-	}
-
-	public int compareTo(Object arg0) {
-		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
@@ -75,6 +113,36 @@ class Node{
 		hash = 97 * hash + (this.point != null ? this.point.hashCode() : 0);
 		hash = 97 * hash + (this.direction != null ? this.direction.hashCode() : 0);
 		return hash;
+	}
+
+	private Direction turnLeft(Direction direction) {
+		switch(direction){
+			case Up:	return Direction.Left;
+			case Left:	return Direction.Down;
+			case Down:	return Direction.Right;
+			case Right:	return Direction.Up;
+			default:	return null;
+		}
+	}
+
+	private Direction turnRight(Direction direction) {
+		switch(direction){
+			case Up:	return Direction.Right;
+			case Left:	return Direction.Up;
+			case Down:	return Direction.Left;
+			case Right:	return Direction.Down;
+			default:	return null;
+		}
+	}
+
+	private Point move(Point point, Direction direction) {
+		switch(direction){
+			case Up:	return new Point(point.x, point.y - 1);
+			case Left:	return new Point(point.x - 1, point.y);
+			case Down:	return new Point(point.x, point.y + 1);
+			case Right:	return new Point(point.x + 1, point.y);
+			default:	return null;
+		}
 	}
 
 }

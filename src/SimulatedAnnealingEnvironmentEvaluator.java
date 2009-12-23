@@ -55,8 +55,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //6. Umgebung in einen Graphen umwandeln (4 Zustände / Blickrichtungen) pro Raum
         List<Node> list = new LinkedList<Node>();
 
-        for(int x=0; x<environment.getWidth(); x++){
-            for(int y=0; y<environment.getHeight(); y++){
+        for(Integer x=0; x<environment.getWidth(); x++){
+            for(Integer y=0; y<environment.getHeight(); y++){
                 if(environment.containsDirt(x, y) || (environment.getAgentHome().equals(new Point(x, y)))
                         || (environment.getAgentLocation().equals(new Point(x, y)))){
                     for(Direction direction : Direction.values()){
