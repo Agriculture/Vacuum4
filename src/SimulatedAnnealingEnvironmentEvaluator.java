@@ -60,7 +60,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 if(environment.containsDirt(x, y) || (environment.getAgentHome().equals(new Point(x, y)))
                         || (environment.getAgentLocation().equals(new Point(x, y)))){
                     for(Direction direction : Direction.values()){
-                        list.add(new Node(new Point(x, y), direction));
+                        list.add(new Node(new Point(x, y), direction, environment));
                     }
                 }
             }
@@ -75,6 +75,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //   b) von jeder Dreckposition (ausser denen unter (5. genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(i) zu allen anderen Dreckpositionen (ausser denen unter (5.) genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(ii) zur nächsten der 4 möglichen Home-Positions-Blickrichtungen
+		calcDistance(list);
 
         //8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
         //   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
@@ -118,4 +119,10 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //Anzeigename im Menü
         return "Abschätzung per Simulated Annealing";
     }
+
+	private void calcDistance(List<Node> list) {
+		for(Node node : list){
+			node.setList(list);
+		}
+	}
 }
