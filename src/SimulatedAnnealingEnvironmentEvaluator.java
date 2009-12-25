@@ -122,6 +122,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 	private void calcDistance(List<Node> list) {
 		for(Node node : list){
+			System.out.println("====> "+node);
 			node.setList(list);
 		}
 	}

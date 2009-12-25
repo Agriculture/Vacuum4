@@ -55,6 +55,20 @@ class SearchNode extends Node implements Comparable {
 		SearchNode obj = (SearchNode) arg0;
 		Integer value = depth + heuristic;
 		return value.compareTo(obj.getValue());
+		/*		if(value < obj.getValue()){
+			return 1;
+		} else {
+			if(value > obj.getValue()){
+				return -1;
+			} else {
+				return 0;
+			}
+		}
+*/	}
+
+	@Override
+	public String toString() {
+		return super.toString()+" value "+(depth+heuristic);
 	}
 
 }

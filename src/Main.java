@@ -49,8 +49,8 @@ public class Main {
 				evaluators);
 	}
 
-	public static void main(String[] args) {
-		try {
+	public static void main(String[] args) throws Exception {
+//		try {
 			//1. Umgebung für Performanceschätzung wählen
 			//   a) Auswürfeln lassen
 			//   EnvironmentBase env=new ObstacleRectangleEnvironment(20,20);
@@ -64,13 +64,16 @@ public class Main {
 
 			//   b) Umgebung in "normaler" Simulation anzeigen lassen, Liste von
 			//      Evaluatoren ist über Menü "Performanceschätzung" erreichbar
-			testAndView(env, new IEnvironmentEvaluator[]{
-						new OptimisticEnvironmentEvaluator(),
-						new SimulatedAnnealingEnvironmentEvaluator(),});
+//			testAndView(env, new IEnvironmentEvaluator[]{
+//						new OptimisticEnvironmentEvaluator(),
+//						new SimulatedAnnealingEnvironmentEvaluator(),});
 
-		} catch (Exception ex) {
+
+		 
+			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
+/*		 } catch (Exception ex) {
 			System.out.println("Problem beim Laden:");
 			System.out.println(ex.toString());
 		}
-	}
+*/	}
 }

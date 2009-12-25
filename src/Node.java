@@ -29,11 +29,20 @@ public class Node{
 
     @Override
     public String toString() {
-        return "Node "+point.getX()+" "+point.getY()+" looking "+direction+"\n";
+		String dir = "";
+		switch(direction){
+			case Up:	dir = "\u2191"; break;
+			case Down:	dir = "\u2193"; break;
+			case Left:	dir = "\u2190"; break;
+			case Right:	dir = "\u2192"; break;
+			default:	dir = "?"; break;
+		}
+        return "Node ("+point.x+", "+point.y+", "+dir+")";
     }
 
 	public void setList(List<Node> list) {
 		for(Node node : list){
+		//	System.out.println("Search from "+this.toString()+" to "+node);
 			Integer dist = search(node);
 			System.out.println("Distance from "+this.toString()+" to "+node+" is "+dist);
 			distance.put(node, dist);
@@ -56,11 +65,16 @@ public class Node{
 
 		while(!queue.isEmpty()){
 			SearchNode node = queue.poll();
+	//		System.out.println("expand "+node);
+	//		System.out.println("size of queue "+queue.size());
+	//		System.out.println("queue "+queue);
 
 			if(node.equals(goal)){
 				return node.getDepth();
 			}
 
+			visitedNodes.put(node, node.getDepth());
+			
 			/**** expand ****/
 			// turn left
 			SearchNode child = new SearchNode(node.getPoint(), turnLeft(node.getDirection()), this.environment,
@@ -68,19 +82,27 @@ public class Node{
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
+//			System.out.println("WWWWWWWW"+child);
 			// turn right
 			child = new SearchNode(node.getPoint(), turnRight(node.getDirection()), this.environment,
 					node.getDepth() + 1, goal);
+//			System.out.println("WWWWWWWW"+child);
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
 			// move
 			child = new SearchNode(move(node.getPoint(), node.getDirection()), node.getDirection(), this.environment,
 					node.getDepth() + 1, goal);
-			if(environment.isRoom(child.getPoint().x, child.getPoint().y)
-					&& !visitedNodes.containsKey(child)){
+//			System.out.println("WWWWWWWW"+child);
+			if(		   (child.getPoint().x >= 0)
+					&& (child.getPoint().y >= 0)
+					&& (child.getPoint().x < environment.getWidth())
+					&& (child.getPoint().y < environment.getHeight())
+					&& environment.isRoom(child.getPoint().x, child.getPoint().y)
+					&& !visitedNodes.containsKey(child) ){
 				queue.add(child);
 			}
+
 		}
 		return value;
 	}
@@ -94,10 +116,10 @@ public class Node{
 		if (obj == null) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
+/*		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Node other = (Node) obj;
+-*/		final Node other = (Node) obj;
 		if (this.point != other.point && (this.point == null || !this.point.equals(other.point))) {
 			return false;
 		}
