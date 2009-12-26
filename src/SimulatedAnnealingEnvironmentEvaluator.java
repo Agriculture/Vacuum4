@@ -2,6 +2,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import vacuumcleaner.base.*;
 
 /**
@@ -10,6 +11,10 @@ import vacuumcleaner.base.*;
  */
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator
 {
+
+	private Random random = new Random();
+	private EnvironmentBase environment;
+	private ArrayList<Node> visitedNodes;
     /**
      * Bestimmt ausgehend von der aktuellen Sitution des Agenten die 
      * maximal erreichbare Performance oder schätzt diese ab. Weiterhin wird noch
@@ -18,8 +23,9 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
      * werden soll
      * @return abgeschätzte oder bestimmte bestmögliche Performance
      */
-    public int getOptimalPerformanceAtFullKnowledge(EnvironmentBase environment)
-    {
+    public int getOptimalPerformanceAtFullKnowledge(EnvironmentBase environment){
+		this.environment = environment;
+
         //1. Liste der besuchten Dreckfelder zurücksetzen
         visitedDirtPoints=new ArrayList<Point>();
 
@@ -55,17 +61,25 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //6. Umgebung in einen Graphen umwandeln (4 Zustände / Blickrichtungen) pro Raum
         List<Node> list = new LinkedList<Node>();
 
+		// fill the list with all dirt points
         for(Integer x=0; x<environment.getWidth(); x++){
             for(Integer y=0; y<environment.getHeight(); y++){
-                if(environment.containsDirt(x, y) || (environment.getAgentHome().equals(new Point(x, y)))
-                        || (environment.getAgentLocation().equals(new Point(x, y)))){
+                if(environment.containsDirt(x, y)){
                     for(Direction direction : Direction.values()){
                         list.add(new Node(new Point(x, y), direction, environment));
                     }
                 }
             }
         }
+		// homelocation must be at the end of the list
+        for(Direction direction : Direction.values()){
+			list.add(new Node(environment.getAgentHome(), direction, environment));
+		}
 
+		// and the start
+		Node start =  new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment);
+
+        System.out.println(start);
         System.out.println(list);
 
         //7. Entfernungen in Aktionen bestimmen:
@@ -75,10 +89,32 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //   b) von jeder Dreckposition (ausser denen unter (5. genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(i) zu allen anderen Dreckpositionen (ausser denen unter (5.) genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(ii) zur nächsten der 4 möglichen Home-Positions-Blickrichtungen
+		start.setList(list);
 		calcDistance(list);
+		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
+		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
 
-        //8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
-        //   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
+		System.out.println(" make a random start");
+		visitedNodes = makeRandomStart(start, list);
+		System.out.println(visitedNodes);
 
         //9. Die Performance (d.h. die zu maximierende Größe) bestimmt sich aus:
         //   ->  Basis-Performance (reachablePerf)
@@ -93,6 +129,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //          -> Hinfahren lohnt sich
         //          -> Endgebühr=lastDirtHomeDist
         //          -> Home-Position in die Liste der besuchten Felder aufnehmen
+
+//		visitedDirtPoints = makeResult(visitedNodes);
 
         return reachablePerf;
     }
@@ -125,5 +163,61 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 			System.out.println("====> "+node);
 			node.setList(list);
 		}
+	}
+
+	private ArrayList<Node> makeRandomStart(Node start, List<Node> list) {
+		ArrayList<Node> points = new ArrayList<Node>();
+
+		// put the start in
+		points.add(start);
+
+		// 4 directions per point minus the home
+		int countPoints = (list.size() / 4) - 1;
+
+		// choose randomly how many
+		int number = random.nextInt(countPoints) + 1;
+		
+		// fill the point list
+		for(int i=0; i<number; i++){
+			// get a random point
+			int pick = random.nextInt(list.size());
+			Node node = list.get(pick);
+
+			// dont visit a point twice
+			if(!containsPoint(points, node)){
+				points.add(node);
+			} else {
+				// try again
+				i--;
+			}
+		}
+
+		// 50% chance to go to home at the end
+		if(random.nextBoolean()){
+			// randomly the direction
+			// the 4 nodes for the home are at the end of the list
+			Node home = list.get(list.size() - random.nextInt(4) -1);
+			points.add(home);
+		}
+
+		return points;
+	}
+
+	/**
+	 *
+	 *  helper for randomStart
+	 * @param points
+	 * @param node
+	 * @return
+	 */
+	private boolean containsPoint(ArrayList<Node> list, Node point) {
+		// check all nodes if the the point is in there
+		for(Node node : list){
+			if(node.getPoint().equals(point.getPoint())){
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
