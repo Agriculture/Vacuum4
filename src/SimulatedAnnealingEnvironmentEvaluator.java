@@ -15,6 +15,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	private Random random = new Random();
 	private EnvironmentBase environment;
 	private ArrayList<Node> visitedNodes;
+	private int homeLimit;
+	private LinkedList<Node> list;
     /**
      * Bestimmt ausgehend von der aktuellen Sitution des Agenten die 
      * maximal erreichbare Performance oder schätzt diese ab. Weiterhin wird noch
@@ -59,7 +61,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
 
         //6. Umgebung in einen Graphen umwandeln (4 Zustände / Blickrichtungen) pro Raum
-        List<Node> list = new LinkedList<Node>();
+        list = new LinkedList<Node>();
 
 		// fill the list with all dirt points
         for(Integer x=0; x<environment.getWidth(); x++){
@@ -71,6 +73,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 }
             }
         }
+		// used for isHome()
+		homeLimit = list.size() - 1;
 		// homelocation must be at the end of the list
         for(Direction direction : Direction.values()){
 			list.add(new Node(environment.getAgentHome(), direction, environment));
@@ -94,10 +98,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
 		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
 
-		System.out.println(" make a random plan");
-		visitedNodes = makeRandomPlan(list);
-		System.out.println(visitedNodes);
-		System.out.println("energy "+energy(start, visitedNodes));
+		visitedNodes = SA(start, 5000);
 
         //9. Die Performance (d.h. die zu maximierende Größe) bestimmt sich aus:
         //   ->  Basis-Performance (reachablePerf)
@@ -115,7 +116,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 		visitedDirtPoints = makeResult(start, visitedNodes);
 
-        return -energy(start, visitedNodes);
+        return energy(start, visitedNodes);
     }
 
     /**
@@ -141,6 +142,42 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         return "Abschätzung per Simulated Annealing";
     }
 
+	private ArrayList<Node> SA(Node start, int tmpMax) {
+		ArrayList<Node> state, bestState;
+		int energy, bestEnergy;
+
+		state = makeRandomPlan(list);
+		energy = energy(start, state);
+
+		bestState = state;
+		bestEnergy = energy;
+
+		int tmp = tmpMax;
+
+
+		while(true){
+			System.out.println("tmp "+tmp);
+			System.out.println("state "+state);
+			energy = energy(start, state);
+			System.out.println("energy "+energy);
+
+			if(energy > bestEnergy){
+				bestEnergy = energy;
+				bestState = state;
+			}
+
+			if(tmp == 0){
+				return bestState;
+			}
+
+			ArrayList<Node> next = neighbour(state);
+			if(energy(start, next) > energy){
+				state = next;
+			}
+			tmp--;
+		}
+	}
+
 	private void calcDistance(List<Node> list) {
 		for(Node node : list){
 			System.out.println("====> "+node);
@@ -148,30 +185,30 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		}
 	}
 
-	private int energy(Node start, List<Node> list) {
+	private int energy(Node start, List<Node> state) {
 		int energy = 0;
 
 		// do nothing ?
-		if(list.isEmpty()){
+		if(state.isEmpty()){
 			// just turn off
 			energy = 999;
 		} else {
-			// go through complete list
-			int limit = list.size();
+			// go through complete state
+			int limit = state.size();
 
 			// is the last one the home position ?
-			if(environment.getAgentHome().equals(list.get(list.size() -1).getPoint())){
+			if(isHome(state.get(state.size() - 1))){
 				// yes -> add moving cost to home
 				Node node;
-				// if the list only consists of the home position
-				if(list.size() == 1){
+				// if the state only consists of the home position
+				if(state.size() == 1){
 					node = start;
 				} else {
-					node = list.get(list.size() - 2);
+					node = state.get(state.size() - 2);
 				}
 				// add meving cost to last position
-				int distance = node.getDistance(list.get(list.size() - 1));
-				System.out.println("HOME: from "+node+" to "+list.get(list.size() - 1)+" move "+distance+" fields");
+				int distance = node.getDistance(state.get(state.size() - 1));
+		//		System.out.println("HOME: from "+node+" to "+state.get(state.size() - 1)+" move "+distance+" fields");
 				energy -= distance;
 				// turn off
 				energy -= 1;
@@ -189,18 +226,21 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 				if(i == 0){
 					node = start;
 				} else {
-					node = list.get(i - 1);
+					node = state.get(i - 1);
 				}
-				int distance = node.getDistance(list.get(i));
-				System.out.println("MOVE: from "+node+" to "+list.get(i)+" move "+distance+" fields");
+				int distance = node.getDistance(state.get(i));
+		//		System.out.println("MOVE: from "+node+" to "+state.get(i)+" move "+distance+" fields");
 				// cost for moving
 				energy -= distance;
 				// price for cleaning
 				energy += 99;
 			}
 		}
-		// invert energy so we can minimize;
-		return -energy;
+		return energy;
+	}
+
+	private boolean isHome(Node node) {
+		return ((list.indexOf(node)) > homeLimit);
 	}
 
 	private ArrayList<Node> makeRandomPlan(List<Node> list) {
@@ -245,9 +285,9 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	 * @param node
 	 * @return
 	 */
-	private boolean containsPoint(ArrayList<Node> list, Node point) {
+	private boolean containsPoint(ArrayList<Node> state, Node point) {
 		// check all nodes if the the point is in there
-		for(Node node : list){
+		for(Node node : state){
 			if(node.getPoint().equals(point.getPoint())){
 				return true;
 			}
@@ -263,5 +303,111 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 			result.add(node.getPoint());
 		}
 		return result;
+	}
+
+	/**
+	 * 4 ways:
+	 *	- turn direction of a node in the list
+	 *  - remove one thing from the list
+	 *  - add a thing to the list
+	 *  - switch 2 nodes
+	 * @param state
+	 * @return
+	 */
+	private ArrayList<Node> neighbour(ArrayList<Node> old) {
+		ArrayList<Node> state = new ArrayList<Node>(old);
+
+		int way = random.nextInt(4);
+//		int way = 3;
+		if((way == 0) && !state.isEmpty()){
+	//		System.out.println("= turn =");
+
+			// turn direction
+			// choose a node
+			Integer index = random.nextInt(state.size());
+			Integer number = list.indexOf(state.get(index));
+			Integer position = number / 4;
+			/* the 4 states
+			System.out.println("index "+index+" number "+number+" position "+position);
+			
+			System.out.println(list.get(position * 4 + 0));
+			System.out.println(list.get(position * 4 + 1));
+			System.out.println(list.get(position * 4 + 2));
+			System.out.println(list.get(position * 4 + 3));
+			*/
+			Node newNode = list.get(position * 4 + random.nextInt(4));
+
+			state.set(index, newNode);
+		}
+		if((way == 1) && !state.isEmpty()){
+			// remove a thing
+//			System.out.println("= remove =");
+
+			int index = random.nextInt(state.size());
+
+//			System.out.println("removed "+index+" "+state.remove(index));
+		}
+		if(way == 2){
+			// add a thing
+//			System.out.println("= add =");
+
+			//check whether the state is at the maximum
+			if((state.size() * 4) == list.size()){
+				// cant add anything
+			} else {
+				// search something new
+				Boolean isNew = false;
+				Node node = null;
+				while(!isNew){
+					Integer index = random.nextInt(list.size());
+					node = list.get(index);
+					isNew = !containsPoint(state, node);
+				}
+				// insert the node somewhere
+				Integer limit = state.size() + 1;
+				if(isHome(node)){
+					// if its the home position add it at the end
+					state.add(node);
+				} else {
+					if(isHome(state.get(state.size() - 1))){
+						// if there is already a home location dont put it at the end
+						limit -= 1;
+					}
+					//
+					Integer index = random.nextInt(limit);
+					ArrayList<Node> oldState = state;
+					// copy all nodes in a new state
+					state = new ArrayList<Node>();
+					for(Node oldNode : oldState){
+						// add before this old node ?
+						if(state.size() == index){
+							state.add(node);
+						}
+						state.add(oldNode);
+					}
+					// add at the end ?
+					if(state.size() == index){
+						state.add(node);
+					}
+				}
+			}
+		}
+		if((way == 3) && (state.size() >= 2)){
+	//		System.out.println("= swap =");
+			Integer index1 = random.nextInt(state.size());
+			Integer index2 = random.nextInt(state.size());
+			// dont swap the home
+			if(isHome(state.get(index1))
+				|| isHome(state.get(index2))){
+				// do nothing
+			}else{
+				// swap
+				Node node = state.get(index1);
+				state.set(index1, state.get(index2));
+				state.set(index2, node);
+			}
+		}
+
+		return state;
 	}
 }

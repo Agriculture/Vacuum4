@@ -4,6 +4,7 @@ import vacuumcleaner.agents.*;
 import vacuumcleaner.environments.*;
 import java.io.File;
 import java.awt.Point;
+import src.ObstacleAgent;
 
 public class Main {
 
@@ -43,7 +44,7 @@ public class Main {
 				//Envrionment
 				environment,
 				//irgendein Agent - um den gehts ja nicht
-				new ReflexAgent1D(), //geht nur von einer Dimension aus
+				new ObstacleAgent(), //geht nur von einer Dimension aus
 
 				//mögliche Evaluatoren - zu finden im Menü Performancetest
 				evaluators);
@@ -64,13 +65,13 @@ public class Main {
 
 			//   b) Umgebung in "normaler" Simulation anzeigen lassen, Liste von
 			//      Evaluatoren ist über Menü "Performanceschätzung" erreichbar
-//			testAndView(env, new IEnvironmentEvaluator[]{
-//						new OptimisticEnvironmentEvaluator(),
-//						new SimulatedAnnealingEnvironmentEvaluator(),});
+			testAndView(env, new IEnvironmentEvaluator[]{
+						new OptimisticEnvironmentEvaluator(),
+						new SimulatedAnnealingEnvironmentEvaluator(),});
 
 
 		 
-			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
+//			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
 /*		 } catch (Exception ex) {
 			System.out.println("Problem beim Laden:");
 			System.out.println(ex.toString());
