@@ -94,27 +94,10 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
 		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
 
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
+		System.out.println(" make a random plan");
+		visitedNodes = makeRandomPlan(list);
 		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
-		System.out.println(" make a random start");
-		visitedNodes = makeRandomStart(start, list);
-		System.out.println(visitedNodes);
+		System.out.println("energy "+energy(start, visitedNodes));
 
         //9. Die Performance (d.h. die zu maximierende Größe) bestimmt sich aus:
         //   ->  Basis-Performance (reachablePerf)
@@ -130,9 +113,9 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //          -> Endgebühr=lastDirtHomeDist
         //          -> Home-Position in die Liste der besuchten Felder aufnehmen
 
-//		visitedDirtPoints = makeResult(visitedNodes);
+		visitedDirtPoints = makeResult(start, visitedNodes);
 
-        return reachablePerf;
+        return -energy(start, visitedNodes);
     }
 
     /**
@@ -165,11 +148,63 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		}
 	}
 
-	private ArrayList<Node> makeRandomStart(Node start, List<Node> list) {
-		ArrayList<Node> points = new ArrayList<Node>();
+	private int energy(Node start, List<Node> list) {
+		int energy = 0;
 
-		// put the start in
-		points.add(start);
+		// do nothing ?
+		if(list.isEmpty()){
+			// just turn off
+			energy = 999;
+		} else {
+			// go through complete list
+			int limit = list.size();
+
+			// is the last one the home position ?
+			if(environment.getAgentHome().equals(list.get(list.size() -1).getPoint())){
+				// yes -> add moving cost to home
+				Node node;
+				// if the list only consists of the home position
+				if(list.size() == 1){
+					node = start;
+				} else {
+					node = list.get(list.size() - 2);
+				}
+				// add meving cost to last position
+				int distance = node.getDistance(list.get(list.size() - 1));
+				System.out.println("HOME: from "+node+" to "+list.get(list.size() - 1)+" move "+distance+" fields");
+				energy -= distance;
+				// turn off
+				energy -= 1;
+				// the last thing is no dirt point
+				limit -= 1;
+			} else {
+				// punishment for not stopping at the home position
+				energy -= 999;
+			}
+			
+			// for all dirt points
+			for(int i=0; i < limit; i++){
+				// get the distance cost
+				Node node;
+				if(i == 0){
+					node = start;
+				} else {
+					node = list.get(i - 1);
+				}
+				int distance = node.getDistance(list.get(i));
+				System.out.println("MOVE: from "+node+" to "+list.get(i)+" move "+distance+" fields");
+				// cost for moving
+				energy -= distance;
+				// price for cleaning
+				energy += 99;
+			}
+		}
+		// invert energy so we can minimize;
+		return -energy;
+	}
+
+	private ArrayList<Node> makeRandomPlan(List<Node> list) {
+		ArrayList<Node> points = new ArrayList<Node>();
 
 		// 4 directions per point minus the home
 		int countPoints = (list.size() / 4) - 1;
@@ -179,8 +214,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		
 		// fill the point list
 		for(int i=0; i<number; i++){
-			// get a random point
-			int pick = random.nextInt(list.size());
+			// get a random point minus the home
+			int pick = random.nextInt(list.size() - 4);
 			Node node = list.get(pick);
 
 			// dont visit a point twice
@@ -196,7 +231,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		if(random.nextBoolean()){
 			// randomly the direction
 			// the 4 nodes for the home are at the end of the list
-			Node home = list.get(list.size() - random.nextInt(4) -1);
+			Node home = list.get(list.size() - random.nextInt(4) - 1);
 			points.add(home);
 		}
 
@@ -219,5 +254,14 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		}
 
 		return false;
+	}
+
+	private ArrayList<Point> makeResult(Node start, ArrayList<Node> visitedNodes) {
+		ArrayList<Point> result = new ArrayList<Point>();
+		result.add(start.getPoint());
+		for(Node node : visitedNodes){
+			result.add(node.getPoint());
+		}
+		return result;
 	}
 }

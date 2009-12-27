@@ -111,6 +111,10 @@ public class Node{
 		return point;
 	}
 
+	public int getDistance(Node node){
+		return distance.get(node);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
