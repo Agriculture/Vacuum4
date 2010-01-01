@@ -11,6 +11,7 @@ import vacuumcleaner.base.*;
  */
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator
 {
+	private Double MAXTMP = 8d;
 
 	private Random random = new Random();
 	private EnvironmentBase environment;
@@ -98,7 +99,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
 		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
 
-		visitedNodes = SA(start, 5000);
+		visitedNodes = SA(start, MAXTMP);
 
         //9. Die Performance (d.h. die zu maximierende Größe) bestimmt sich aus:
         //   ->  Basis-Performance (reachablePerf)
@@ -142,7 +143,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         return "Abschätzung per Simulated Annealing";
     }
 
-	private ArrayList<Node> SA(Node start, int tmpMax) {
+	private ArrayList<Node> SA(Node start, Double tmpMax) {
 		ArrayList<Node> state, bestState;
 		int energy, bestEnergy;
 
@@ -152,29 +153,57 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		bestState = state;
 		bestEnergy = energy;
 
-		int tmp = tmpMax;
+		Double tmp = tmpMax;
 
 
 		while(true){
-			System.out.println("tmp "+tmp);
-			System.out.println("state "+state);
 			energy = energy(start, state);
-			System.out.println("energy "+energy);
 
+
+			// save the best
+			// (this is not exactly in the algorithm but an optimization
 			if(energy > bestEnergy){
+				System.out.println("tmp "+tmp);
+				System.out.println("state "+state);
+				System.out.println("energy "+energy);
+
 				bestEnergy = energy;
 				bestState = state;
 			}
 
-			if(tmp == 0){
+			// terminate
+			if(tmp <= 0){
 				return bestState;
 			}
 
 			ArrayList<Node> next = neighbour(state);
-			if(energy(start, next) > energy){
+			int nextEnergy = energy(start, next);
+			if(nextEnergy >= energy){
+				// always take it when it is better
 				state = next;
+			} else {
+				// only take it if the temperatur allows it
+				Double chance = (new Double(nextEnergy - energy));
+//				System.out.println(chance);
+
+				Double temp = Math.pow(Math.E, tmp);
+
+				chance = chance / temp;
+//				System.out.println("-> "+chance);
+				// tmp;
+				chance = Math.pow(Math.E, chance);
+
+				Double probability = Math.random();
+	//			System.out.println(probability+" "+chance);
+
+				if(probability > chance){
+					state = next;
+				}
+
+
+		//		System.out.println("probability "+chance+" e^ "+Math.pow(Math.E, chance));
 			}
-			tmp--;
+			tmp-= 0.000001;
 		}
 	}
 
