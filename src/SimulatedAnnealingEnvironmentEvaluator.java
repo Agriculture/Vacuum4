@@ -1,5 +1,6 @@
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -11,11 +12,12 @@ import vacuumcleaner.base.*;
  */
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator
 {
-	private Double MAXTMP = 8d;
+	private Double MAXTMP = 15d;
+	private Double MINTMP = 10d;
 
 	private Random random = new Random();
 	private EnvironmentBase environment;
-	private ArrayList<Node> visitedNodes;
+	private List<Node> visitedNodes;
 	private int homeLimit;
 	private LinkedList<Node> list;
     /**
@@ -131,7 +133,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
      * @return Liste der besuchten Dreckfelder (und anderer "interessanter" Punkte)
      */
     @Override
-    public ArrayList<Point> getVisitedPoints() 
+    public ArrayList<Point> getVisitedPoints()
     {
         return visitedDirtPoints;
     }
@@ -143,8 +145,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         return "Abschätzung per Simulated Annealing";
     }
 
-	private ArrayList<Node> SA(Node start, Double tmpMax) {
-		ArrayList<Node> state, bestState;
+	private List<Node> SA(Node start, Double tmpMax) {
+		List<Node> state, bestState;
 		int energy, bestEnergy;
 
 		state = makeRandomPlan(list);
@@ -164,7 +166,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 			// (this is not exactly in the algorithm but an optimization
 			if(energy > bestEnergy){
 				System.out.println("tmp "+tmp);
-				System.out.println("state "+state);
+	//			System.out.println("state "+state);
 				System.out.println("energy "+energy);
 
 				bestEnergy = energy;
@@ -172,31 +174,30 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 			}
 
 			// terminate
-			if(tmp <= 0){
+			if(tmp <= MINTMP){
 				return bestState;
 			}
 
-			ArrayList<Node> next = neighbour(state);
+			List<Node> next = neighbour(state);
 			int nextEnergy = energy(start, next);
 			if(nextEnergy >= energy){
 				// always take it when it is better
 				state = next;
 			} else {
 				// only take it if the temperatur allows it
-				Double chance = (new Double(nextEnergy - energy));
+				Double delta = (new Double(nextEnergy - energy));
 //				System.out.println(chance);
 
 				Double temp = Math.pow(Math.E, tmp);
 
-				chance = chance / temp;
+				Double chance = Math.pow(Math.E, delta / temp);
 //				System.out.println("-> "+chance);
-				// tmp;
-				chance = Math.pow(Math.E, chance);
 
 				Double probability = Math.random();
 	//			System.out.println(probability+" "+chance);
 
 				if(probability > chance){
+		//			System.out.println("now ");
 					state = next;
 				}
 
@@ -209,7 +210,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 	private void calcDistance(List<Node> list) {
 		for(Node node : list){
-			System.out.println("====> "+node);
+//			System.out.println("====> "+node);
 			node.setList(list);
 		}
 	}
@@ -272,8 +273,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		return ((list.indexOf(node)) > homeLimit);
 	}
 
-	private ArrayList<Node> makeRandomPlan(List<Node> list) {
-		ArrayList<Node> points = new ArrayList<Node>();
+	private List<Node> makeRandomPlan(List<Node> list) {
+		List<Node> points = new ArrayList<Node>();
 
 		// 4 directions per point minus the home
 		int countPoints = (list.size() / 4) - 1;
@@ -314,7 +315,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	 * @param node
 	 * @return
 	 */
-	private boolean containsPoint(ArrayList<Node> state, Node point) {
+	private boolean containsPoint(List<Node> state, Node point) {
 		// check all nodes if the the point is in there
 		for(Node node : state){
 			if(node.getPoint().equals(point.getPoint())){
@@ -325,7 +326,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		return false;
 	}
 
-	private ArrayList<Point> makeResult(Node start, ArrayList<Node> visitedNodes) {
+	private ArrayList<Point> makeResult(Node start, List<Node> visitedNodes) {
 		ArrayList<Point> result = new ArrayList<Point>();
 		result.add(start.getPoint());
 		for(Node node : visitedNodes){
@@ -335,19 +336,20 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	}
 
 	/**
-	 * 4 ways:
+	 * 5 ways:
 	 *	- turn direction of a node in the list
 	 *  - remove one thing from the list
 	 *  - add a thing to the list
 	 *  - switch 2 nodes
+	 *  - invert a sublist
 	 * @param state
 	 * @return
 	 */
-	private ArrayList<Node> neighbour(ArrayList<Node> old) {
-		ArrayList<Node> state = new ArrayList<Node>(old);
+	private List<Node> neighbour(List<Node> old) {
+		List<Node> state = new ArrayList<Node>(old);
 
-		int way = random.nextInt(4);
-//		int way = 3;
+		int way = random.nextInt(5);
+//		int way = 4;
 		if((way == 0) && !state.isEmpty()){
 	//		System.out.println("= turn =");
 
@@ -404,7 +406,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 					}
 					//
 					Integer index = random.nextInt(limit);
-					ArrayList<Node> oldState = state;
+					List<Node> oldState = state;
 					// copy all nodes in a new state
 					state = new ArrayList<Node>();
 					for(Node oldNode : oldState){
@@ -435,6 +437,33 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 				state.set(index1, state.get(index2));
 				state.set(index2, node);
 			}
+		}
+		if((way == 4) && (state.size() >= 2)){
+			int from = random.nextInt(state.size() - 2);
+//			System.out.println(state);
+//			System.out.println("min from "+0);
+//			System.out.println("max from "+(state.size()-2));
+			int to = 0;
+			if(isHome(state.get(state.size() - 1))){
+				to = random.nextInt(state.size() - from - 1) + from + 1;
+//				System.out.println("min to "+(from + 1));
+//				System.out.println("max to "+(state.size() - from - 1 + from + 1));
+			} else {
+				to = random.nextInt(state.size() - from - 1) + from + 2;
+//				System.out.println("min to "+(from + 2));
+//				System.out.println("max to "+(state.size() - from - 1 + from + 2));
+			}
+//			System.out.println("change from "+from+" to "+to);
+			List<Node> sublist = state.subList(from, to);
+			Collections.reverse(sublist);
+//			for(int i=0; i<from; i++){
+//				sublist.add(i, state.get(i));
+//			}
+//			for(int j=to; j<state.size(); j++){
+//				System.out.println("add"+state.get(j));
+//				sublist.add(state.get(j));
+//			}
+//			state = sublist;
 		}
 
 		return state;

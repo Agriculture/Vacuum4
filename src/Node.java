@@ -44,7 +44,7 @@ public class Node{
 		for(Node node : list){
 		//	System.out.println("Search from "+this.toString()+" to "+node);
 			Integer dist = search(node);
-			System.out.println("Distance from "+this.toString()+" to "+node+" is "+dist);
+	//		System.out.println("Distance from "+this.toString()+" to "+node+" is "+dist);
 			distance.put(node, dist);
 		}
 	}
