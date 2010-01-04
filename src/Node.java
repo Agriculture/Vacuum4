@@ -1,6 +1,5 @@
 
 import java.awt.Point;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -46,14 +45,10 @@ public class Node{
 	}
 
 
-	public List<Node> search(List<Node> list) {
-                System.out.println("search "+this);
-                int count = 0;
-                int searchLimit = environment.getWidth() * environment.getHeight() / 4;
-
-                List<Node> goal = new ArrayList<Node>(list);
+	private int search(Node goal) {
+		int count = 0;
 		PriorityQueue<SearchNode> queue = new PriorityQueue<SearchNode>();
-		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0);
+		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal);
 		queue.add(root);
 
 		HashMap<SearchNode, Integer> visitedNodes = new HashMap<SearchNode, Integer>();
@@ -65,45 +60,37 @@ public class Node{
 	//		System.out.println("size of queue "+queue.size());
 	//		System.out.println("queue "+queue);
 
-
-
-
-			if(goal.contains(node)){
-                                distance.put(node, node.getDepth());
-                                goal.remove(node);
-
-                                count = 0;
+			if(node.equals(goal)){
+				return node.getDepth();
 			}
 
-//                        if(count > searchLimit){
-//                            return goal;
-//                        }
-
-
-                        if(goal.isEmpty()){
-                                return goal;
-                        }
+			if(count > 1000){
+				int distance = 0;
+				distance += Math.abs(point.x - goal.getPoint().x);
+				distance += Math.abs(point.y - goal.getPoint().y);
+				return 1000 + distance;
+			}
 
 			visitedNodes.put(node, node.getDepth());
 			
 			/**** expand ****/
 			// turn left
 			SearchNode child = new SearchNode(node.getPoint(), turnLeft(node.getDirection()), this.environment,
-					node.getDepth() + 1);
+					node.getDepth() + 1, goal);
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
 //			System.out.println("WWWWWWWW"+child);
 			// turn right
 			child = new SearchNode(node.getPoint(), turnRight(node.getDirection()), this.environment,
-					node.getDepth() + 1);
+					node.getDepth() + 1, goal);
 //			System.out.println("WWWWWWWW"+child);
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
 			// move
 			child = new SearchNode(move(node.getPoint(), node.getDirection()), node.getDirection(), this.environment,
-					node.getDepth() + 1);
+					node.getDepth() + 1, goal);
 //			System.out.println("WWWWWWWW"+child);
 			if(		   (child.getPoint().x >= 0)
 					&& (child.getPoint().y >= 0)
@@ -113,10 +100,11 @@ public class Node{
 					&& !visitedNodes.containsKey(child) ){
 				queue.add(child);
 			}
-                        count++;
+			count++;
 
 		}
-                return goal;
+		// not reachable
+		return 10000;
 	}
 
 	public Point getPoint(){
@@ -124,6 +112,9 @@ public class Node{
 	}
 
 	public int getDistance(Node node){
+		if(!distance.containsKey(node)){
+			distance.put(node, search(node));
+		}
 		return distance.get(node);
 	}
 

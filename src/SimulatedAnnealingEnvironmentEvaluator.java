@@ -12,8 +12,8 @@ import vacuumcleaner.base.*;
  */
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator
 {
-	private Double MAXTMP = 15d;
-	private Double MINTMP = 10d;
+	private Double MAXTMP = 3d;
+	private Double MINTMP = 0.0d;
 
 	private Random random = new Random();
 	private EnvironmentBase environment;
@@ -96,15 +96,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //   b) von jeder Dreckposition (ausser denen unter (5. genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(i) zu allen anderen Dreckpositionen (ausser denen unter (5.) genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(ii) zur nächsten der 4 möglichen Home-Positions-Blickrichtungen
-                System.out.println(list.size()/4+" elements to search");
-		List<Node> unreachable = start.search(list);
-                // TODO: what if home is in unreachable ?
-//                System.out.println(list);
-                System.out.println(unreachable);
-                list.removeAll(unreachable);
-                System.out.println("remove "+unreachable.size()/4+" nodes");
-//                System.out.println(list);
-		calcDistance(list);
+//		start.setList(list);
+//		calcDistance(list);
 		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
 		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
 
@@ -156,7 +149,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		List<Node> state, bestState;
 		int energy, bestEnergy;
 
-		state = makeRandomPlan(list);
+//		state = makeRandomPlan();
+		state = makeSmartPlan(start);
 		energy = energy(start, state);
 
 		bestState = state;
@@ -204,22 +198,15 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 				Double probability = Math.random();
 	//			System.out.println(probability+" "+chance);
 
-				if(probability > chance){
-		//			System.out.println("now ");
+				if(probability < chance){
+			//	System.out.println(delta+" "+chance);
 					state = next;
 				}
 
 
 		//		System.out.println("probability "+chance+" e^ "+Math.pow(Math.E, chance));
 			}
-			tmp-= 0.00001;
-		}
-	}
-
-	private void calcDistance(List<Node> list) {
-		for(Node node : list){
-//			System.out.println("====> "+node);
-			node.search(list);
+			tmp-= 0.000001;
 		}
 	}
 
@@ -281,16 +268,16 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		return ((list.indexOf(node)) > homeLimit);
 	}
 
-	private List<Node> makeRandomPlan(List<Node> list) {
+	private List<Node> makeRandomPlan() {
 		List<Node> points = new ArrayList<Node>();
 
 		// 4 directions per point minus the home
 		int countPoints = (list.size() / 4) - 1;
-                System.out.println(list.size()+" "+countPoints);
 
 		// choose randomly how many
 		int number = random.nextInt(countPoints) + 1;
 	//	int number = countPoints;
+		System.out.println("pick "+number+" out of "+countPoints);
 
 		// fill the point list
 		for(int i=0; i<number; i++){
@@ -316,6 +303,52 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		}
 
 		return points;
+	}
+
+	private List<Node> makeSmartPlan(Node start){
+		List<Node> result = new ArrayList<Node>();
+		List<Node> copy = new ArrayList<Node>(list);
+
+		// delete the home
+		for(int i=0; i<4; i++){
+			copy.remove(copy.size() - 1);
+		}
+
+		System.out.println("make plan");
+
+		Node location = start;
+		int limit = list.size()/4 - 1;
+		for(int i=0; i<limit; i++){
+			Node nearest = null;
+			Integer distance = null;
+			for(Node node : copy){
+				int value = 0;
+				value += Math.abs(location.getPoint().x - node.getPoint().x);
+				value += Math.abs(location.getPoint().y - node.getPoint().y);
+
+				if(((distance == null) || (value < distance)) && (!containsPoint(result, node))){
+					nearest = node;
+					distance = value;
+				}
+
+			}
+
+			System.out.println("add "+nearest);
+
+			result.add(nearest);
+			location = nearest;
+			System.out.println("add "+nearest);
+		}
+
+		// 50% chance to go to home at the end
+		if(random.nextBoolean()){
+			// randomly the direction
+			// the 4 nodes for the home are at the end of the list
+			Node home = list.get(list.size() - random.nextInt(4) - 1);
+			result.add(home);
+		}
+
+		return result;
 	}
 
 	/**
@@ -360,12 +393,12 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
                 int way = 0;
                 int rand = random.nextInt(22);
-//		int way = random.nextInt(5);
                 if(rand > 4){
                     way = 4;
                 } else {
                     way = rand;
                 }
+//		int way = random.nextInt(5);
 //		int way = 4;
 		if((way == 0) && !state.isEmpty()){
 	//		System.out.println("= turn =");
