@@ -13,13 +13,11 @@ import vacuumcleaner.base.EnvironmentBase;
  * @author konrad
  */
 class SearchNode extends Node implements Comparable {
-	private int depth;
-	private int heuristic;
+	private Integer depth;
 
-	public SearchNode(Point point, Direction direction, EnvironmentBase environment, Integer depth, Node goal) {
+	public SearchNode(Point point, Direction direction, EnvironmentBase environment, Integer depth) {
 		super(point, direction, environment);
 		this.depth = depth;
-		heuristic = calcHeuristic(goal);
 	}
 
 	@Override
@@ -36,25 +34,11 @@ class SearchNode extends Node implements Comparable {
 		return depth;
 	}
 
-	int getValue(){
-		return depth + heuristic;
-	}
-
-	private int calcHeuristic(Node goal) {
-		Integer value = 0;
-		// manhattan distance
-		value += Math.abs(goal.getPoint().x - this.getPoint().x);
-		value += Math.abs(goal.getPoint().y - this.getPoint().y);
-		
-		return value;
-	}
-
 	public int compareTo(Object arg0) {
 		if(getClass() != arg0.getClass())
 			return 0;
 		SearchNode obj = (SearchNode) arg0;
-		Integer value = depth + heuristic;
-		return value.compareTo(obj.getValue());
+		return depth.compareTo(obj.getDepth());
 		/*		if(value < obj.getValue()){
 			return 1;
 		} else {
@@ -68,7 +52,7 @@ class SearchNode extends Node implements Comparable {
 
 	@Override
 	public String toString() {
-		return super.toString()+" value "+(depth+heuristic);
+		return super.toString()+" depth "+depth;
 	}
 
 }

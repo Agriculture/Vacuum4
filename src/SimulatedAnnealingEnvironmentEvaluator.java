@@ -96,7 +96,14 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         //   b) von jeder Dreckposition (ausser denen unter (5. genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(i) zu allen anderen Dreckpositionen (ausser denen unter (5.) genannten) mit allen dabei möglichen Blickrichtungen
         //      ->(ii) zur nächsten der 4 möglichen Home-Positions-Blickrichtungen
-		start.setList(list);
+                System.out.println(list.size()/4+" elements to search");
+		List<Node> unreachable = start.search(list);
+                // TODO: what if home is in unreachable ?
+//                System.out.println(list);
+                System.out.println(unreachable);
+                list.removeAll(unreachable);
+                System.out.println("remove "+unreachable.size()/4+" nodes");
+//                System.out.println(list);
 		calcDistance(list);
 		//8. Ein Suchzustand ist nun eine Liste von durchfahrenen Dreckpositionen (ausser (5.)), jede Dreckposition wird maximal 1x in genau einer Blickrichtung durchfahren
 		//   Diese Liste kann auch leer sein, dann wird keine Dreckposition angefahren.
@@ -212,7 +219,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	private void calcDistance(List<Node> list) {
 		for(Node node : list){
 //			System.out.println("====> "+node);
-			node.setList(list);
+			node.search(list);
 		}
 	}
 
@@ -279,6 +286,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 		// 4 directions per point minus the home
 		int countPoints = (list.size() / 4) - 1;
+                System.out.println(list.size()+" "+countPoints);
 
 		// choose randomly how many
 		int number = random.nextInt(countPoints) + 1;

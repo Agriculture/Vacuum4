@@ -1,5 +1,6 @@
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -40,24 +41,19 @@ public class Node{
         return "Node ("+point.x+", "+point.y+", "+dir+")";
     }
 
-	public void setList(List<Node> list) {
-		for(Node node : list){
-		//	System.out.println("Search from "+this.toString()+" to "+node);
-			Integer dist = search(node);
-	//		System.out.println("Distance from "+this.toString()+" to "+node+" is "+dist);
-			distance.put(node, dist);
-		}
-	}
-
 	Direction getDirection(){
 		return direction;
 	}
 
 
-	private int search(Node goal) {
-		Integer value = 99999;
+	public List<Node> search(List<Node> list) {
+                System.out.println("search "+this);
+                int count = 0;
+                int searchLimit = environment.getWidth() * environment.getHeight() / 4;
+
+                List<Node> goal = new ArrayList<Node>(list);
 		PriorityQueue<SearchNode> queue = new PriorityQueue<SearchNode>();
-		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal);
+		SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0);
 		queue.add(root);
 
 		HashMap<SearchNode, Integer> visitedNodes = new HashMap<SearchNode, Integer>();
@@ -69,30 +65,45 @@ public class Node{
 	//		System.out.println("size of queue "+queue.size());
 	//		System.out.println("queue "+queue);
 
-			if(node.equals(goal)){
-				return node.getDepth();
+
+
+
+			if(goal.contains(node)){
+                                distance.put(node, node.getDepth());
+                                goal.remove(node);
+
+                                count = 0;
 			}
+
+//                        if(count > searchLimit){
+//                            return goal;
+//                        }
+
+
+                        if(goal.isEmpty()){
+                                return goal;
+                        }
 
 			visitedNodes.put(node, node.getDepth());
 			
 			/**** expand ****/
 			// turn left
 			SearchNode child = new SearchNode(node.getPoint(), turnLeft(node.getDirection()), this.environment,
-					node.getDepth() + 1, goal);
+					node.getDepth() + 1);
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
 //			System.out.println("WWWWWWWW"+child);
 			// turn right
 			child = new SearchNode(node.getPoint(), turnRight(node.getDirection()), this.environment,
-					node.getDepth() + 1, goal);
+					node.getDepth() + 1);
 //			System.out.println("WWWWWWWW"+child);
 			if(!visitedNodes.containsKey(child)){
 				queue.add(child);
 			}
 			// move
 			child = new SearchNode(move(node.getPoint(), node.getDirection()), node.getDirection(), this.environment,
-					node.getDepth() + 1, goal);
+					node.getDepth() + 1);
 //			System.out.println("WWWWWWWW"+child);
 			if(		   (child.getPoint().x >= 0)
 					&& (child.getPoint().y >= 0)
@@ -102,9 +113,10 @@ public class Node{
 					&& !visitedNodes.containsKey(child) ){
 				queue.add(child);
 			}
+                        count++;
 
 		}
-		return value;
+                return goal;
 	}
 
 	public Point getPoint(){
