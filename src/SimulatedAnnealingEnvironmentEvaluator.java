@@ -86,8 +86,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 		// and the start
 		Node start =  new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment);
 
-        System.out.println(start);
-        System.out.println(list);
+    //    System.out.println(start);
+    //    System.out.println(list);
 
         //7. Entfernungen in Aktionen bestimmen:
         //   a) von der AgentenPosition/Start-Blickrichtung
@@ -188,6 +188,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 				Double delta = (new Double(nextEnergy - energy));
 //				System.out.println(chance);
 
+                                // calculate with e^tmp to get a nice curve
 				Double temp = Math.pow(Math.E, tmp);
 
 				Double chance = Math.pow(Math.E, delta / temp);
@@ -204,7 +205,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 		//		System.out.println("probability "+chance+" e^ "+Math.pow(Math.E, chance));
 			}
-			tmp-= 0.000001;
+			tmp-= 0.00001;
 		}
 	}
 
@@ -281,7 +282,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 		// choose randomly how many
 		int number = random.nextInt(countPoints) + 1;
-		
+	//	int number = countPoints;
+
 		// fill the point list
 		for(int i=0; i<number; i++){
 			// get a random point minus the home
@@ -348,7 +350,14 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 	private List<Node> neighbour(List<Node> old) {
 		List<Node> state = new ArrayList<Node>(old);
 
-		int way = random.nextInt(5);
+                int way = 0;
+                int rand = random.nextInt(22);
+//		int way = random.nextInt(5);
+                if(rand > 4){
+                    way = 4;
+                } else {
+                    way = rand;
+                }
 //		int way = 4;
 		if((way == 0) && !state.isEmpty()){
 	//		System.out.println("= turn =");
@@ -439,6 +448,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 			}
 		}
 		if((way == 4) && (state.size() >= 2)){
+                        // also invert the direction
 			int from = random.nextInt(state.size() - 2);
 //			System.out.println(state);
 //			System.out.println("min from "+0);
@@ -456,14 +466,20 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 //			System.out.println("change from "+from+" to "+to);
 			List<Node> sublist = state.subList(from, to);
 			Collections.reverse(sublist);
-//			for(int i=0; i<from; i++){
-//				sublist.add(i, state.get(i));
-//			}
-//			for(int j=to; j<state.size(); j++){
-//				System.out.println("add"+state.get(j));
-//				sublist.add(state.get(j));
-//			}
-//			state = sublist;
+
+              //          System.out.println(sublist);
+                        for(int i=0; i<sublist.size(); i++){
+                            Node node = sublist.get(i);
+                            Direction dir = node.turnRight(node.turnRight(node.getDirection()));
+                            Node com = new Node(node.getPoint(), dir, null);
+                            for(Node origin : list){
+                                if(com.equals(origin)){
+                                    sublist.set(i, origin);
+                                    break;
+                                }
+                            }
+                        }
+            //            System.out.println("=> "+sublist);
 		}
 
 		return state;

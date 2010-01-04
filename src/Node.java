@@ -151,7 +151,7 @@ public class Node{
 		}
 	}
 
-	private Direction turnRight(Direction direction) {
+	public Direction turnRight(Direction direction) {
 		switch(direction){
 			case Up:	return Direction.Right;
 			case Left:	return Direction.Up;
