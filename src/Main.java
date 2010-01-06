@@ -65,13 +65,13 @@ public class Main {
 
 			//   b) Umgebung in "normaler" Simulation anzeigen lassen, Liste von
 			//      Evaluatoren ist über Menü "Performanceschätzung" erreichbar
-			testAndView(env, new IEnvironmentEvaluator[]{
-						new OptimisticEnvironmentEvaluator(),
-						new SimulatedAnnealingEnvironmentEvaluator(),});
+//			testAndView(env, new IEnvironmentEvaluator[]{
+//						new OptimisticEnvironmentEvaluator(),
+//						new SimulatedAnnealingEnvironmentEvaluator(),});
 
 
 		 
-//			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
+			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
 /*		 } catch (Exception ex) {
 			System.out.println("Problem beim Laden:");
 			System.out.println(ex.toString());
