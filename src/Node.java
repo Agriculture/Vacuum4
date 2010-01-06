@@ -20,11 +20,14 @@ public class Node {
     private Direction direction;
     private HashMap<Node, Integer> distance = new HashMap<Node, Integer>();
     private EnvironmentBase environment;
+    private final SimulatedAnnealingEnvironmentEvaluator sim;
 
-    public Node(Point point, Direction direction, EnvironmentBase environment) {
+    public Node(Point point, Direction direction, EnvironmentBase environment, SimulatedAnnealingEnvironmentEvaluator sim) {
         this.point = point;
         this.direction = direction;
         this.environment = environment;
+        this.sim = sim;
+
     }
 
     @Override
@@ -57,7 +60,7 @@ public class Node {
     private int search(Node goal) {
         int count = 0;
         PriorityQueue<SearchNode> queue = new PriorityQueue<SearchNode>();
-        SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal);
+        SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal, sim);
         queue.add(root);
 
         HashMap<SearchNode, Integer> visitedNodes = new HashMap<SearchNode, Integer>();
@@ -85,21 +88,21 @@ public class Node {
             /**** expand ****/
 // turn left
             SearchNode child = new SearchNode(node.getPoint(), turnLeft(node.getDirection()), this.environment,
-                    node.getDepth() + 1, goal);
+                    node.getDepth() + 1, goal, sim);
             if (!visitedNodes.containsKey(child)) {
                 queue.add(child);
             }
 // System.out.println("WWWWWWWW"+child);
 // turn right
             child = new SearchNode(node.getPoint(), turnRight(node.getDirection()), this.environment,
-                    node.getDepth() + 1, goal);
+                    node.getDepth() + 1, goal, sim);
 // System.out.println("WWWWWWWW"+child);
             if (!visitedNodes.containsKey(child)) {
                 queue.add(child);
             }
 // move
             child = new SearchNode(move(node.getPoint(), node.getDirection()), node.getDirection(), this.environment,
-                    node.getDepth() + 1, goal);
+                    node.getDepth() + 1, goal, sim);
 // System.out.println("WWWWWWWW"+child);
             if ((child.getPoint().x >= 0) && (child.getPoint().y >= 0) && (child.getPoint().x < environment.getWidth()) && (child.getPoint().y < environment.getHeight()) && environment.isRoom(child.getPoint().x, child.getPoint().y) && !visitedNodes.containsKey(child)) {
                 queue.add(child);
@@ -108,7 +111,8 @@ public class Node {
 
         }
 // not reachable
-        return 10000;
+        sim.deletePoint(goal.getPoint());
+        return -1;
     }
 
     public Point getPoint() {
@@ -117,7 +121,12 @@ public class Node {
 
     public int getDistance(Node node) {
         if (!distance.containsKey(node)) {
-            distance.put(node, search(node));
+            int value = search(node);
+            if(value != -1){
+                distance.put(node, search(node));
+            } else {
+                return -1;
+            }
         }
         return distance.get(node);
     }

@@ -19,7 +19,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
     private EnvironmentBase environment;
     private List<Node> visitedNodes;
     private int homeLimit;
-    private LinkedList<Node> list;
+    private List<Node> list;
 
     /**
      * Bestimmt ausgehend von der aktuellen Sitution des Agenten die 
@@ -72,7 +72,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             for (Integer y = 0; y < environment.getHeight(); y++) {
                 if (environment.containsDirt(x, y)) {
                     for (Direction direction : Direction.values()) {
-                        list.add(new Node(new Point(x, y), direction, environment));
+                        list.add(new Node(new Point(x, y), direction, environment, this));
                     }
                 }
             }
@@ -81,11 +81,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         homeLimit = list.size() - 1;
         // homelocation must be at the end of the list
         for (Direction direction : Direction.values()) {
-            list.add(new Node(environment.getAgentHome(), direction, environment));
+            list.add(new Node(environment.getAgentHome(), direction, environment, this));
         }
 
         // and the start
-        Node start = new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment);
+        Node start = new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment, this);
 
         //    System.out.println(start);
         //    System.out.println(list);
@@ -152,6 +152,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 //        state = makeRandomPlan(list);
           state = makeSmartPlan(start);
         energy = energy(start, state);
+        while(energy <= -10000){
+            energy += 10000;
+            state.remove(-energy);
+            energy = energy(start, state);
+        }
 
         bestState = state;
         bestEnergy = energy;
@@ -161,6 +166,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
         while (true) {
             energy = energy(start, state);
+            while(energy < -10000){
+                energy += 10000;
+                state.remove(-energy);
+                energy = energy(start, state);
+            }
 
 
             // save the best
@@ -181,6 +191,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
             List<Node> next = neighbour(state);
             int nextEnergy = energy(start, next);
+            while(nextEnergy <= -10000){
+                nextEnergy += 10000;
+                next.remove(-nextEnergy);
+                nextEnergy = energy(start, state);
+            }
             if (nextEnergy >= energy) {
                 // always take it when it is better
                 state = next;
@@ -216,7 +231,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         // do nothing ?
         if (state.isEmpty()) {
             // just turn off
-            energy = 999;
+            if(isHome(start)){
+                energy = -1;
+            } else {
+                energy = -1001;
+            }
         } else {
             // go through complete state
             int limit = state.size();
@@ -234,6 +253,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 // add meving cost to last position
                 int distance = node.getDistance(state.get(state.size() - 1));
                 //		System.out.println("HOME: from "+node+" to "+state.get(state.size() - 1)+" move "+distance+" fields");
+                if(distance == -1)
+                    return -state.size() - 1 - 10000;
                 energy -= distance;
                 // turn off
                 energy -= 1;
@@ -254,6 +275,8 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                     node = state.get(i - 1);
                 }
                 int distance = node.getDistance(state.get(i));
+                if(distance == -1)
+                    return -i - 10000;
                 //		System.out.println("MOVE: from "+node+" to "+state.get(i)+" move "+distance+" fields");
                 // cost for moving
                 energy -= distance;
@@ -511,7 +534,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             for (int i = 0; i < sublist.size(); i++) {
                 Node node = sublist.get(i);
                 Direction dir = node.turnRight(node.turnRight(node.getDirection()));
-                Node com = new Node(node.getPoint(), dir, null);
+                Node com = new Node(node.getPoint(), dir, null, null);
                 for (Node origin : list) {
                     if (com.equals(origin)) {
                         sublist.set(i, origin);
@@ -524,4 +547,17 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
         return state;
     }
+
+    void deletePoint(Point point) {
+        List<Node> copy = new ArrayList<Node>(list);
+        for(Node node : copy){
+            // delete
+            if(node.getPoint().equals(point)){
+                list.remove(node);
+                homeLimit--;
+                System.out.println("removed "+node);
+            }
+        }
+    }
+
 }
