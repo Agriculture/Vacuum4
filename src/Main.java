@@ -56,10 +56,10 @@ public class Main {
 			//   a) Auswürfeln lassen
 			//   EnvironmentBase env=new ObstacleRectangleEnvironment(20,20);
 			//   b) Um Verbesserungen des Evaluators zu messen, die selbe Umgebung aus Datei laden:
-			String fileName = "dont_go_home.env";
+			String fileName = "wrong2.env";
 			EnvironmentBase env = EnvironmentBase.load(new File(fileName));
 
-                        env = new TestWorld();
+                     //   env = new TestWorld();
 
 			//2. Anzeigen und Evaluator laufen lassen
 			//   a) nur Evaluator laufen lassen und Ergebnis auf der Konsole anzeigen
@@ -67,13 +67,13 @@ public class Main {
 
 			//   b) Umgebung in "normaler" Simulation anzeigen lassen, Liste von
 			//      Evaluatoren ist über Menü "Performanceschätzung" erreichbar
-			testAndView(env, new IEnvironmentEvaluator[]{
-						new OptimisticEnvironmentEvaluator(),
-						new SimulatedAnnealingEnvironmentEvaluator(),});
+//			testAndView(env, new IEnvironmentEvaluator[]{
+//						new OptimisticEnvironmentEvaluator(),
+//						new SimulatedAnnealingEnvironmentEvaluator(),});
 
 
 		 
-//			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
+			Main.testConsole(env, new SimulatedAnnealingEnvironmentEvaluator());
 /*		 } catch (Exception ex) {
 			System.out.println("Problem beim Laden:");
 			System.out.println(ex.toString());

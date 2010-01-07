@@ -21,12 +21,14 @@ public class Node {
     private HashMap<Node, Integer> distance = new HashMap<Node, Integer>();
     private EnvironmentBase environment;
     private final SimulatedAnnealingEnvironmentEvaluator sim;
+    private Boolean home;
 
-    public Node(Point point, Direction direction, EnvironmentBase environment, SimulatedAnnealingEnvironmentEvaluator sim) {
+    public Node(Point point, Direction direction, EnvironmentBase environment, SimulatedAnnealingEnvironmentEvaluator sim, Boolean home) {
         this.point = point;
         this.direction = direction;
         this.environment = environment;
         this.sim = sim;
+        this.home = home;
 
     }
 
@@ -55,6 +57,10 @@ public class Node {
 
     Direction getDirection() {
         return direction;
+    }
+
+    public Boolean isHome(){
+        return home;
     }
 
     private int search(Node goal) {
@@ -144,6 +150,9 @@ public class Node {
             return false;
         }
         if (this.direction != other.direction) {
+            return false;
+        }
+        if (this.isHome() != other.isHome()){
             return false;
         }
         return true;

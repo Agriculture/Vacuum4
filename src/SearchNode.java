@@ -17,7 +17,7 @@ class SearchNode extends Node implements Comparable {
     private int heuristic;
 
     public SearchNode(Point point, Direction direction, EnvironmentBase environment, Integer depth, Node goal, SimulatedAnnealingEnvironmentEvaluator sim) {
-        super(point, direction, environment, sim);
+        super(point, direction, environment, sim, false);
         this.depth = depth;
         heuristic = calcHeuristic(goal);
     }

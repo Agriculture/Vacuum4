@@ -14,7 +14,7 @@ import vacuumcleaner.base.*;
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator {
 
     private Double MAXTMP = 15d;
-    private Double MINTMP = 10d;
+    private Double MINTMP = 14.99d;
     private Random random = new Random();
     private EnvironmentBase environment;
     private List<Node> visitedNodes;
@@ -27,7 +27,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
      * die Liste der dabei besuchten Dreckfelder gefüllt
      * @param environment Umgebung, zu der die bestmögliche Performance bestimmt 
      * werden soll
-     * @return abgeschätzte oder bestimmte bestmögliche Performance
+     * @return abgeschätzte oder b-estimmte bestmögliche Performance
      */
     public int getOptimalPerformanceAtFullKnowledge(EnvironmentBase environment) {
         this.environment = environment;
@@ -72,7 +72,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             for (Integer y = 0; y < environment.getHeight(); y++) {
                 if (environment.containsDirt(x, y)) {
                     for (Direction direction : Direction.values()) {
-                        list.add(new Node(new Point(x, y), direction, environment, this));
+                        list.add(new Node(new Point(x, y), direction, environment, this, false));
                     }
                 }
             }
@@ -81,14 +81,14 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         homeLimit = list.size() - 1;
         // homelocation must be at the end of the list
         for (Direction direction : Direction.values()) {
-            list.add(new Node(environment.getAgentHome(), direction, environment, this));
+            list.add(new Node(environment.getAgentHome(), direction, environment, this, true));
         }
 
         // and the start
-        Node start = new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment, this);
+        Node start = new Node(environment.getAgentLocation(), environment.getAgentDirection(), environment, this, false);
 
-        //    System.out.println(start);
-        //    System.out.println(list);
+            System.out.println(start);
+            System.out.println(list);
 
         //7. Entfernungen in Aktionen bestimmen:
         //   a) von der AgentenPosition/Start-Blickrichtung
@@ -235,7 +235,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         // do nothing ?
         if (state.isEmpty()) {
             // just turn off
-            if(isHome(start)){
+            if(start.isHome()){
                 energy = -1;
             } else {
                 energy = -1001;
@@ -245,7 +245,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             int limit = state.size();
 
             // is the last one the home position ?
-            if (isHome(state.get(state.size() - 1))) {
+            if ((state.get(state.size() - 1)).isHome()) {
                 // yes -> add moving cost to home
                 Node node;
                 // if the state only consists of the home position
@@ -254,11 +254,12 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 } else {
                     node = state.get(state.size() - 2);
                 }
-                // add meving cost to last position
+                // add moving cost to last position
                 int distance = node.getDistance(state.get(state.size() - 1));
                 //		System.out.println("HOME: from "+node+" to "+state.get(state.size() - 1)+" move "+distance+" fields");
                 if(distance == -1){
                     System.out.println(state.get(state.size() - 1)+" not reachable");
+                    // -10000 to flag the unreachable node -> -(x+10000) is the position of the unreachable node
                     return -(state.size() - 1) - 10000;
                 }
                 energy -= distance;
@@ -266,6 +267,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 energy -= 1;
                 // the last thing is no dirt point
                 limit -= 1;
+               // System.out.println("reached home"+state);
             } else {
                 // punishment for not stopping at the home position
                 energy -= 999;
@@ -291,10 +293,6 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             }
         }
         return energy;
-    }
-
-    private boolean isHome(Node node) {
-        return ((list.indexOf(node)) > homeLimit);
     }
 
     private List<Node> makeSmartPlan(Node start) {
@@ -387,33 +385,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         return points;
     }
 
-    /**
-     *
-     *  helper for randomStart
-     * @param points
-     * @param node
-     * @return
-     */
-    private boolean containsPoint(List<Node> state, Node point) {
-        // check all nodes if the the point is in there
-        for (Node node : state) {
-            if (node.getPoint().equals(point.getPoint())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private ArrayList<Point> makeResult(Node start, List<Node> visitedNodes) {
-        ArrayList<Point> result = new ArrayList<Point>();
-        result.add(start.getPoint());
-        for (Node node : visitedNodes) {
-            result.add(node.getPoint());
-        }
-        return result;
-    }
-
+ 
     /**
      * 5 ways:
      *	- turn direction of a node in the list
@@ -465,7 +437,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
         if (way == 2) {
             // add a thing
-//			System.out.println("= add =");
+			System.out.println("= add =");
 
             //check whether the state is at the maximum
             if ((state.size() * 4) == list.size()) {
@@ -474,18 +446,25 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 // search something new
                 Boolean isNew = false;
                 Node node = null;
+                System.out.println(homeLimit +" "+state);
                 while (!isNew) {
                     Integer index = random.nextInt(list.size());
                     node = list.get(index);
-                    isNew = !containsPoint(state, node);
+                    if(node.isHome()){
+                        isNew = !containsHome(state);
+                    } else {
+                        isNew = !containsPoint(state, node);
+
+                    }
                 }
+                System.out.println("finished cycle");
                 // insert the node somewhere
                 Integer limit = state.size() + 1;
-                if (isHome(node)) {
+                if (node.isHome()) {
                     // if its the home position add it at the end
                     state.add(node);
                 } else {
-                    if (!state.isEmpty() && isHome(state.get(state.size() - 1))) {
+                    if (!state.isEmpty() && (state.get(state.size() - 1)).isHome()) {
                         // if there is already a home location dont put it at the end
                         limit -= 1;
                     }
@@ -513,7 +492,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             Integer index1 = random.nextInt(state.size());
             Integer index2 = random.nextInt(state.size());
             // dont swap the home
-            if (isHome(state.get(index1)) || isHome(state.get(index2))) {
+            if ((state.get(index1)).isHome() || (state.get(index2)).isHome()) {
                 // do nothing
             } else {
                 // swap
@@ -529,7 +508,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 //			System.out.println("min from "+0);
 //			System.out.println("max from "+(state.size()-2));
             int to = 0;
-            if (isHome(state.get(state.size() - 1))) {
+            if ((state.get(state.size() - 1)).isHome()) {
                 to = random.nextInt(state.size() - from - 1) + from + 1;
 //				System.out.println("min to "+(from + 1));
 //				System.out.println("max to "+(state.size() - from - 1 + from + 1));
@@ -546,7 +525,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             for (int i = 0; i < sublist.size(); i++) {
                 Node node = sublist.get(i);
                 Direction dir = node.turnRight(node.turnRight(node.getDirection()));
-                Node com = new Node(node.getPoint(), dir, null, null);
+                Node com = new Node(node.getPoint(), dir, null, null, false);
                 for (Node origin : list) {
                     if (com.equals(origin)) {
                         sublist.set(i, origin);
@@ -565,11 +544,51 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         for(Node node : copy){
             // delete
             if(node.getPoint().equals(point)){
+                if(!node.isHome()){
+                    homeLimit--;
+                }
                 list.remove(node);
-                homeLimit--;
                 System.out.println("removed "+node);
             }
         }
     }
+
+    private Boolean containsHome(List<Node> state) {
+        for(Node node : state){
+            if(node.isHome()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+   /**
+     *
+     *  helper for randomStart
+     * @param points
+     * @param node
+     * @return
+     */
+    private boolean containsPoint(List<Node> state, Node point) {
+        // check all nodes if the the point is in there
+        // BUG: dirt and home can be on the same location -> cant add dirt/home
+        // -< fixed >-
+        for (Node node : state) {
+            if (!node.isHome() && node.getPoint().equals(point.getPoint())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    private ArrayList<Point> makeResult(Node start, List<Node> visitedNodes) {
+        ArrayList<Point> result = new ArrayList<Point>();
+        result.add(start.getPoint());
+        for (Node node : visitedNodes) {
+            result.add(node.getPoint());
+        }
+        return result;
+    }
+
 
 }
