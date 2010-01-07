@@ -45,6 +45,17 @@ class SearchNode extends Node implements Comparable {
 // manhattan distance
         value += Math.abs(goal.getPoint().x - this.getPoint().x);
         value += Math.abs(goal.getPoint().y - this.getPoint().y);
+		Direction direction = this.getDirection();
+		if(direction == goal.getDirection()){
+			value += 0;
+		} else{
+			if(((super.turnRight(direction) == goal.getDirection())
+				|| super.turnLeft(direction) == goal.getDirection())){
+				value += 1;
+			} else {
+				value += 2;
+			}
+		}
 
         return value;
     }

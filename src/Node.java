@@ -85,6 +85,12 @@ public class Node {
                 return node.getDepth();
             }
 
+//			if(sim.getList().contains(node)){
+//				if(node.hasDistance(goal)){
+//					return node.getDepth()+node.getDistance(goal);
+//				}
+//			}
+
 //            if (count > 5000) {
 //                sim.deletePoint(goal.getPoint());
 //				return -1;
@@ -138,6 +144,10 @@ public class Node {
         return distance.get(node);
     }
 
+	public boolean hasDistance(Node node){
+		return distance.containsKey(node);
+	}
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -167,7 +177,7 @@ public class Node {
         return hash;
     }
 
-    private Direction turnLeft(Direction direction) {
+    public Direction turnLeft(Direction direction) {
         switch (direction) {
             case Up:
                 return Direction.Left;

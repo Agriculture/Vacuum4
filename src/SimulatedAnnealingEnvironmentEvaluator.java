@@ -14,7 +14,7 @@ import vacuumcleaner.base.*;
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator {
 
     private Double MAXTMP = 15d;
-    private Double MINTMP = 13d;
+    private Double MINTMP = 10d;
     private Random random = new Random();
     private EnvironmentBase environment;
     private List<Node> visitedNodes;
@@ -151,6 +151,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 //        state = makeRandomPlan(list);
           state = makeSmartPlan(start);
+//		state = makePerfectStart(start);
         energy = energy(start, state);
         while(energy <= -10000){
             energy += 10000;
@@ -294,6 +295,13 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
         return energy;
     }
+
+	private List<Node> makePerfectStart(Node start) {
+		List<Node> result = new ArrayList<Node>();
+        List<Node> copy = new ArrayList<Node>(list);
+
+		return result;
+	}
 
     private List<Node> makeSmartPlan(Node start) {
         List<Node> result = new ArrayList<Node>();
@@ -589,6 +597,10 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
         return result;
     }
+
+	public List<Node> getList(){
+		return list;
+	}
 
 
 }
