@@ -14,7 +14,7 @@ import vacuumcleaner.base.*;
 public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvaluator {
 
     private Double MAXTMP = 15d;
-    private Double MINTMP = 14.99d;
+    private Double MINTMP = 13d;
     private Random random = new Random();
     private EnvironmentBase environment;
     private List<Node> visitedNodes;
@@ -149,12 +149,12 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         List<Node> state, bestState;
         int energy, bestEnergy;
 
-        state = makeRandomPlan(list);
-//          state = makeSmartPlan(start);
+//        state = makeRandomPlan(list);
+          state = makeSmartPlan(start);
         energy = energy(start, state);
         while(energy <= -10000){
             energy += 10000;
-            System.out.println(state);
+          //  System.out.println(state);
             state.remove(-energy);
             energy = energy(start, state);
         }
@@ -170,7 +170,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             energy = energy(start, state);
             while(energy < -10000){
                 energy += 10000;
-                System.out.println(state);
+            //    System.out.println(state);
                 state.remove(-energy);
                 energy = energy(start, state);
             }
@@ -196,7 +196,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             int nextEnergy = energy(start, next);
             while(nextEnergy <= -10000){
                 nextEnergy += 10000;
-                System.out.println(next);
+             //   System.out.println(next);
                 next.remove(-nextEnergy);
                 nextEnergy = energy(start, state);
             }
@@ -437,7 +437,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         }
         if (way == 2) {
             // add a thing
-			System.out.println("= add =");
+			//System.out.println("= add =");
 
             //check whether the state is at the maximum
             if ((state.size() * 4) == list.size()) {
@@ -446,7 +446,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 // search something new
                 Boolean isNew = false;
                 Node node = null;
-                System.out.println(homeLimit +" "+state);
+        //        System.out.println(homeLimit +" "+state);
                 while (!isNew) {
                     Integer index = random.nextInt(list.size());
                     node = list.get(index);
@@ -457,7 +457,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
                     }
                 }
-                System.out.println("finished cycle");
+        //        System.out.println("finished cycle");
                 // insert the node somewhere
                 Integer limit = state.size() + 1;
                 if (node.isHome()) {

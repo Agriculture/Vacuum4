@@ -65,6 +65,9 @@ public class Node {
 
     private int search(Node goal) {
         int count = 0;
+		// make a new goal with homeLocation == false
+		// -> all SearchNodes have this at false -> doesnt make a difference for finding the goal
+		goal = new Node(goal.getPoint(), goal.getDirection(), environment, sim, false);
         PriorityQueue<SearchNode> queue = new PriorityQueue<SearchNode>();
         SearchNode root = new SearchNode(this.point, this.direction, this.environment, 0, goal, sim);
         queue.add(root);
@@ -82,12 +85,10 @@ public class Node {
                 return node.getDepth();
             }
 
-            if (count > 1000) {
-                int distance = 0;
-                distance += Math.abs(point.x - goal.getPoint().x);
-                distance += Math.abs(point.y - goal.getPoint().y);
-                return 1000 + distance;
-            }
+//            if (count > 5000) {
+//                sim.deletePoint(goal.getPoint());
+//				return -1;
+//            }
 
             visitedNodes.put(node, node.getDepth());
 
