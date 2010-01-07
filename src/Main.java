@@ -56,8 +56,10 @@ public class Main {
 			//   a) Auswürfeln lassen
 			//   EnvironmentBase env=new ObstacleRectangleEnvironment(20,20);
 			//   b) Um Verbesserungen des Evaluators zu messen, die selbe Umgebung aus Datei laden:
-			String fileName = "problem.env";
+			String fileName = "dont_go_home.env";
 			EnvironmentBase env = EnvironmentBase.load(new File(fileName));
+
+                        env = new TestWorld();
 
 			//2. Anzeigen und Evaluator laufen lassen
 			//   a) nur Evaluator laufen lassen und Ergebnis auf der Konsole anzeigen

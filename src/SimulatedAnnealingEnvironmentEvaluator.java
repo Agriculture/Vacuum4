@@ -149,11 +149,12 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         List<Node> state, bestState;
         int energy, bestEnergy;
 
-//        state = makeRandomPlan(list);
-          state = makeSmartPlan(start);
+        state = makeRandomPlan(list);
+//          state = makeSmartPlan(start);
         energy = energy(start, state);
         while(energy <= -10000){
             energy += 10000;
+            System.out.println(state);
             state.remove(-energy);
             energy = energy(start, state);
         }
@@ -165,9 +166,11 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 
 
         while (true) {
+      //      System.out.println(state);
             energy = energy(start, state);
             while(energy < -10000){
                 energy += 10000;
+                System.out.println(state);
                 state.remove(-energy);
                 energy = energy(start, state);
             }
@@ -193,6 +196,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
             int nextEnergy = energy(start, next);
             while(nextEnergy <= -10000){
                 nextEnergy += 10000;
+                System.out.println(next);
                 next.remove(-nextEnergy);
                 nextEnergy = energy(start, state);
             }
@@ -253,8 +257,10 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                 // add meving cost to last position
                 int distance = node.getDistance(state.get(state.size() - 1));
                 //		System.out.println("HOME: from "+node+" to "+state.get(state.size() - 1)+" move "+distance+" fields");
-                if(distance == -1)
-                    return -state.size() - 1 - 10000;
+                if(distance == -1){
+                    System.out.println(state.get(state.size() - 1)+" not reachable");
+                    return -(state.size() - 1) - 10000;
+                }
                 energy -= distance;
                 // turn off
                 energy -= 1;
@@ -345,7 +351,14 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         System.out.println(list.size() + " " + countPoints);
 
         // choose randomly how many
-        int number = random.nextInt(countPoints) + 1;
+        int number = 0;
+        if(countPoints > 0){
+            number = random.nextInt(countPoints) + 1;
+        } else {
+            // when there are no dirtpoints
+            // -> just select the home position
+            number = 0;
+        }
         //	int number = countPoints;
 
         // fill the point list
@@ -415,14 +428,13 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
         List<Node> state = new ArrayList<Node>(old);
 
         int way = 0;
+//	way = random.nextInt(5);
         int rand = random.nextInt(22);
-//		int way = random.nextInt(5);
         if (rand > 4) {
             way = 4;
         } else {
             way = rand;
         }
-//		int way = 4;
         if ((way == 0) && !state.isEmpty()) {
             //		System.out.println("= turn =");
 
@@ -448,7 +460,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
 //			System.out.println("= remove =");
 
             int index = random.nextInt(state.size());
-
+            state.remove(index);
 //			System.out.println("removed "+index+" "+state.remove(index));
         }
         if (way == 2) {
@@ -473,7 +485,7 @@ public class SimulatedAnnealingEnvironmentEvaluator implements IEnvironmentEvalu
                     // if its the home position add it at the end
                     state.add(node);
                 } else {
-                    if (isHome(state.get(state.size() - 1))) {
+                    if (!state.isEmpty() && isHome(state.get(state.size() - 1))) {
                         // if there is already a home location dont put it at the end
                         limit -= 1;
                     }
